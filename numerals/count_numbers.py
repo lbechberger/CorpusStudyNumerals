@@ -11,7 +11,7 @@ import sys, re
 import matplotlib.pyplot as plt
 
 in_filename = sys.argv[1]   # input file to read (i.e., corpus)
-n = int(sys.argv[2])             # look at all numbers between 0 and n-1
+n = int(sys.argv[2]) + 1    # look at all numbers between 0 and n-1
 
 counts = [0] * n
 # regex to search for numbers --> precompile for efficiency
