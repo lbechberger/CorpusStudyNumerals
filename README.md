@@ -9,3 +9,8 @@ count_numbers.py can be used as follows:
 
 It will plot the number of occurrences for each number from 100 to 200 (including both borders).
 For the plots under /plots, the file eng_news_2015_3M-sentences.txt from the Leipzig corpus was used.
+
+## count_numbers_separator.py
+
+Same as count_numbers.py, but it also takes into account separators:
+"1,000" is interpreted as "1000", not as "1".
