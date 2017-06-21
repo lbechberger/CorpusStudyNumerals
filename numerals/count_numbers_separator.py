@@ -22,7 +22,7 @@ if language == "de":
 
 counts = {}
 # regex to search for numbers --> precompile for efficiency
-regex = re.compile('^.*\t.*[ -\$"\[\(](\d+(\{0}\d\d\d)*)[ \.,\!\?:-€;\]\)"].*$'.format(separator))
+regex = re.compile('^.*\t.*[ \-\$"\[\(](\d+(\{0}\d\d\d)*)[ \.,\!\?:\-€;\]\)"].*$'.format(separator))
 
 
 print "starting to process..."

@@ -16,7 +16,7 @@ n_high = int(sys.argv[3])   # and <= n_high
 
 counts = {}
 # regex to search for numbers --> precompile for efficiency
-regex = re.compile('^.*\t.*[ -\$"\[\(](\d+)[ \.,\!\?:-€;\]\)"].*$')
+regex = re.compile('^.*\t.*[ \-\$"\[\(](\d+)[ \.,\!\?:\-€;\]\)"].*$')
 
 print "starting to process..."
 num_lines = 0
