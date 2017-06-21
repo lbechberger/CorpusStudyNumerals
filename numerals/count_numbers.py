@@ -11,9 +11,10 @@ import sys, re
 import matplotlib.pyplot as plt
 
 in_filename = sys.argv[1]   # input file to read (i.e., corpus)
-n = int(sys.argv[2]) + 1    # look at all numbers between 0 and n-1
+n_low = int(sys.argv[2])    # look at all numbers >= n_low
+n_high = int(sys.argv[3])   # and <= n_high
 
-counts = [0] * n
+counts = {}
 # regex to search for numbers --> precompile for efficiency
 regex = re.compile('^.*\t.*[ -\$"\[\(](\d+)[ \.,\!\?:-€;\]\)"].*$')
 
@@ -23,9 +24,12 @@ with open(in_filename, 'r') as f:
     for line in f:
         match = regex.search(line)
         if match != None:
-            number = int(match.group(1))        # found a number: add it to list if necessary
-            if number >= 0 and number < n:
-                counts[number] += 1
+            number = int(match.group(1))        # found a number: add it to the dictionary if necessary
+            if number >= n_low and number <= n_high:
+                if not number in counts:    # not yet in dictionary: new entry
+                    counts[number] = 1
+                else:                       # already in dictionary: increase
+                 counts[number] = counts[number] + 1
         num_lines += 1
         if num_lines % 500000 == 0: # progress bar
             print "...{0} lines".format(num_lines)
@@ -33,5 +37,7 @@ with open(in_filename, 'r') as f:
 print "processed {0} lines".format(num_lines)
 
 # plot a bar chart
-plt.bar(range(n), counts)
+numbers = range(n_low, n_high + 1)
+values = map(lambda x: counts[x] if x in counts else 0, numbers)
+plt.bar(numbers, values)
 plt.show()
