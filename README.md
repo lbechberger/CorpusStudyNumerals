@@ -4,13 +4,10 @@ Some scripts for a corpus study on numerals
 ## count_numbers.py
 
 count_numbers.py can be used as follows:
+```python
+python count_numbers.py path/to/corpus/file.txt 100 200 en
+```
 
-`python count_numbers.py path/to/corpus/file.txt 100 200`
-
-It will plot the number of occurrences for each number from 100 to 200 (including both borders).
+This script plots the number of occurrences for each number from 100 to 200 (including both borders), assuming English separators (i.e., "1,000" = "1000"). The last parameter can also be set to "de" (which results in using points to separate digits: "1.000" = "1000").
 For the plots under /plots, the file eng_news_2015_3M-sentences.txt from the Leipzig corpus was used.
 
-## count_numbers_separator.py
-
-Same as count_numbers.py, but it also takes into account separators:
-"1,000" is interpreted as "1000", not as "1".
