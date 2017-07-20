@@ -24,7 +24,7 @@ counts = {}
 # regex to search for numbers --> precompile for efficiency
 regex = re.compile('[ \-\$"\[\(](\d+(\{0}\d\d\d)*)[ \.,\!\?:\-€;\]\)"]'.format(separator))
 
-print "starting to process..."
+print("starting to process...")
 num_lines = 0
 with open(in_filename, 'r') as f:
     for line in f:
@@ -41,12 +41,12 @@ with open(in_filename, 'r') as f:
            
         num_lines += 1
         if num_lines % 500000 == 0: # progress bar
-            print "...{0} lines".format(num_lines)
+            print("...{0} lines".format(num_lines))
 
-print "processed {0} lines".format(num_lines)
+print("processed {0} lines".format(num_lines))
 
 # plot a bar chart
 numbers = range(n_low, n_high + 1)
-values = map(lambda x: counts[x] if x in counts else 0, numbers)
+values = list(map(lambda x: counts[x] if x in counts else 0, numbers))
 plt.bar(numbers, values)
 plt.show()
