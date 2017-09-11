@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# command: python ./CorpusStudyNumerals-master/numerals/count_numbers.py --plot --min=0 
+# --max=100000 ./eng_news_2015_100K/eng_news_2015_100K-sentences.txt
 
 """
 Created on Thu Jun  8 16:16:12 2017
@@ -13,7 +15,7 @@ from __future__ import print_function
 import os
 import sys
 import locale
-import argparse
+import argparse # [p] sets up the parser for the input from the command line
 
 from languages import Language
 from processor import Processor
@@ -37,8 +39,8 @@ if __name__ == '__main__':
                         help = 'output version information and exit')
     parser.add_argument("file", nargs='*',
                         help = 'the file(s) to process')
-    args = parser.parse_args()
-
+    args = parser.parse_args() # [p] args is arguments min, max, language, [...] and file to process
+# -----------------------------------------------------------------------------
     # initialize the language object (language of the corpus
     # determines number separators (1,000 vs. 1.000), assume English
     # if not given
@@ -48,13 +50,13 @@ if __name__ == '__main__':
         print("error: language \"{}\" is not supported.".
               format(args.language), file=sys.stderr)
         sys.exit(1)
-
+# -----------------------------------------------------------------------------
     # now do the processing ...
-    processor = Processor(language)
-    processor.setLimits(args.min, args.max)
-    processor.verbosity = 2
+    processor = Processor(language) # [p] Processor object constructed from input 'language'
+    processor.setLimits(args.min, args.max)  # [p] method setLimits specified
+    processor.verbosity = 2 # [p] such a talkative program
     if not args.file:
-        processor.processFile(sys.stdin)
+        processor.processFile(sys.stdin) # [p] what does sys.stdin do here :'(
     for name in args.file:
         if name == '-':
             processor.processFile(sys.stdin)
@@ -71,7 +73,7 @@ if __name__ == '__main__':
                       format(name),file=sys.stderr)
                 sys.exit(1)
 
-        if os.path.isdir(name):
+        if os.path.isdir(name): # [p] NOTIMPORTANT nice foresightful stuff l did there
             guess = os.path.join(name, os.path.basename(name)+"-sentences.txt")
             if os.path.isfile(guess):
                 name = guess
@@ -82,7 +84,7 @@ if __name__ == '__main__':
 
         # ... and run the processor
         print("Using \"{}\"".format(name), file=sys.stderr)
-        with open(name, 'r') as inputStream:
+        with open(name, 'r', encoding="utf8") as inputStream:
             processor.processFile(inputStream)
 
     # finally plot the results
