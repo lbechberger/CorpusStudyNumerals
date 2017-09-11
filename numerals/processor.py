@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import sys
 import locale
+import re # [p]
+from num2words import num2words # [p]
 
 try:
     import matplotlib.pyplot as plt
@@ -62,6 +64,10 @@ class Processor:
         
         if self.verbosity > 0:
             sys.stderr.write("Starting to process ")
+        # [p] precompile regex for numberwords --------------------------------    
+        numberwords = [num2words(i) for i in range(self.n_low,self.n_high+1)]
+        numwordstr = r"\b(" + "|".join(numberwords) + r")\b"
+        wordRegex = re.compile(numwordstr)
 
         for line in inputStream:
             # manually remove everything before the tabulator
@@ -88,7 +94,17 @@ class Processor:
                     else:
                         # already in dictionary: increase
                         self.counts[number] += 1
-           
+            # [p] stuff that is to be done by me ------------------------------
+            numwordmatches = wordRegex.findall(sentence)
+            # print('word matches: ',numwordmatches)
+            for numwordmatch in numwordmatches:
+                numword = text2num(numwordmatch) # text2num has to be downloaded and in the same dir as the rest of the code
+                
+                if not numword in self.counts:
+                    self.counts[numword] = 1
+                else:
+                    self.counts[number] += 1
+                    
             if self.showProgressBar and (num['lines'] % 100000 == 0):
                 sys.stderr.write('.' if self.verbosity > 0 else
                                  r'{}\r'.format(num['lines']))
