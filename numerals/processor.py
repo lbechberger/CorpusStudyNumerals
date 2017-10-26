@@ -4,6 +4,7 @@ import sys
 import locale
 import re # [p]
 from num2words import num2words # [p]
+from text2num import text2num
 
 try:
     import matplotlib.pyplot as plt
@@ -103,7 +104,7 @@ class Processor:
                 if not numword in self.counts:
                     self.counts[numword] = 1
                 else:
-                    self.counts[number] += 1
+                    self.counts[numword] += 1
                     
             if self.showProgressBar and (num['lines'] % 100000 == 0):
                 sys.stderr.write('.' if self.verbosity > 0 else
