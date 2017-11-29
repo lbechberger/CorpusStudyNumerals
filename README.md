@@ -7,6 +7,8 @@ Some scripts for a corpus study on numerals
 The package is more or less self contained. There are no hard
 requirements to run the programs. However, to actually use it in a
 reasonable way, you need the following:
+* [num2words](https://pypi.python.org/pypi/num2words)
+* [digify](https://pypi.python.org/pypi/Digify)
 * [matplotlib](https://matplotlib.org/)  (if you want to create plots)
 * some corpus, i.e. a plain text file containing example sentences --
   you may use data from the Leipzig [Wortschatz](http://wortschatz.uni-leipzig.de)

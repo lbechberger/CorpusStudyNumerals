@@ -2,6 +2,11 @@
 
 import re
 
+#from text2num import text2num
+# text2num has to be downloaded and in the same dir as the rest of the code
+from digify import spelled_num_to_digits as text2num #  # FIXME[hack]: digify seems to be newer than text2num
+from num2words import num2words # [p]
+
 class Language:
     '''A base class representing a language. Derived classes may
     provide language specific implementations.
@@ -44,14 +49,76 @@ class Language:
         expressions.
         '''
         
-        prefix = '[ \-\$"\[\(]'
+        prefix = '[ \-\$"\[\(^]' # FIXME[problem]: '^' should match start of line, but it doesn't!
         number = '(\d+(?:\{0}\d\d\d)*)'.format(self.thousandsSeparator)
         postfix = '[ \.,\!\?:\-€;\]\)"]'
-        self.regex = re.compile(prefix + number + postfix)
+        self.regex = re.compile(prefix + number + postfix, re.M)
 
         words = r"\b(" + "|".join(self.numberWords.keys()) + r")\b"
         self.words = re.compile(words)
 
+
+    def precompile_numberwords(self,min,max):
+        # [p] precompile regex for numberwords --------------------------------    
+        # FIXME[hack]: adapt for different languges!
+        numberwords = [num2words(i) for i in range(min,max+1)]
+        numwordstr = r"\b(" + "|".join(numberwords) + r")\b"
+        self.wordRegex = re.compile(numwordstr)
+
+
+    def match_numbers(self, line):
+        '''Match numbers (written as digits) in a given line.
+
+        Arguments
+        ---------
+        line: string
+            A line of text.
+ 
+        Result
+        ------
+        A list of integers, corresponding to the numbers found in the line.
+        '''
+
+        matches = self.regex.findall(line)
+        if not matches:
+            return matches
+
+        numbers = []
+        for match in matches:
+            text = match.replace(self.thousandsSeparator, "")
+            numbers.append(int(text))
+        
+        return numbers
+
+    
+    def match_number_words(self, line):
+        '''Match numbers (written as words) in a given line.
+
+        Arguments
+        ---------
+        line: string
+            A line of text.
+
+        Result
+        ------
+        A list of integers, corresponding to the numbers found in the line.
+        '''
+
+        # FIXME[old]:
+        wordMatches = self.words.findall(line)
+        if not wordMatches:
+            return wordMatches
+            
+        # [p] stuff that is to be done by me ------------------------------
+        numwordmatches = self.wordRegex.findall(sentence)
+        # print('word matches: ',numwordmatches)
+        numbers = []
+        for match in numwordmatches:
+            numbers.append(text2num(numwordmatch))
+
+        return numbers
+
+    
 
 class English(Language):
 

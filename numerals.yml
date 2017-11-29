@@ -1,0 +1,10 @@
+ name: numerals
+ channels:
+   - auto
+   - defaults
+ dependencies:
+   - python=2.7
+   - numpy
+   - matplotlib
+   - num2words
+   - digify

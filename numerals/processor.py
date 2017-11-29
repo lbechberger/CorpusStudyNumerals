@@ -3,14 +3,64 @@ from __future__ import print_function
 import sys
 import locale
 import re # [p]
-from num2words import num2words # [p]
-from text2num import text2num
 
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
 
+class Counter:
+    '''The Counter class is a collection of individual counters.  It is
+    intended to count the occurences of numerals (integers), but it
+    may also be used to count other things.
+
+    '''
+    
+    _min_value = 0
+    _max_value = 1
+    _counters = {}
+
+    def __init__(self, min=0, max=100):
+        '''Create a new counter.
+
+        Arguments
+        ---------
+        min : int
+            The minimal value to count. All smaller values will be ignored.
+        max : int
+            The maximal value to count. All larger values will be ignored.
+        '''
+        self._max_value = max
+        self.reset()
+        
+    def __call__(self, number):
+        if number >= self._min_value and number <= self._max_value:
+            # not yet in dictionary: new entry
+            if not number in self._counters:
+                self._counters[number] = 1
+            else:
+                # already in dictionary: increase
+                self._counters[number] += 1
+
+
+    def __getitem__(self, number):
+        return self._counters[number] if number in self._counters else 0
+
+    def sum(self):
+        '''Get the sum of all element counters.
+
+        Result
+        ------
+        The sum of all element counters.
+        '''
+        return sum(self._counters.values())
+    
+    def reset(self):
+        '''Reset this counter object.
+        This will just set all counters to 0
+        but will keep all other parameters.
+        '''
+        self._counters = {}
 
 class Processor:
     '''A Processor can process a single text file from a corpus.  It is
@@ -22,34 +72,30 @@ class Processor:
 
     n_low = 1
     n_high = 100
-    
+
+    _match_number_words_flag = True
     showProgressBar = True
     verbosity = 1
-    
-    counts = {}
 
-    def __init__(self, language):
+    _counter = None
+
+
+    def __init__(self, language, min=0, max=100):
         '''Create a new Processor.
 
         Arguments
         ---------
         language : Language
+        min : int
+            The minimal value to count. All smaller values will be ignored.
+        max : int
+            The maximal value to count. All larger values will be ignored.
         '''
         self.language = language
+        self._counter = Counter(min=min, max=max)
 
-
-    def setLimits(self, low, high):
-        '''Set the limits.
-        The limits specify the range of interest, i.e. the smallest
-        and largest number we are interested in.
-
-        Arguments
-        ---------
-        low : int
-        high : int
-        '''
-        self.n_low = low
-        self.n_high = high
+        if self._match_number_words_flag:
+            self.language.precompile_numberwords(min,max)
 
 
     def reset(self):
@@ -57,7 +103,7 @@ class Processor:
         Resetting will only affect the counters, but not the
         configuration (range of interest, verbosity, etc.).
         '''
-        self.counts = {}
+        self._counter = Counter()
 
 
     def processFile(self, inputStream):
@@ -65,47 +111,36 @@ class Processor:
         
         if self.verbosity > 0:
             sys.stderr.write("Starting to process ")
-        # [p] precompile regex for numberwords --------------------------------    
-        numberwords = [num2words(i) for i in range(self.n_low,self.n_high+1)]
-        numwordstr = r"\b(" + "|".join(numberwords) + r")\b"
-        wordRegex = re.compile(numwordstr)
 
-        for line in inputStream:
-            # manually remove everything before the tabulator
-            sentence = line.split("\t")[1]
+        for sentence in inputStream:
 
-            # look for ALL occurences of numbers
-            matches = self.language.regex.findall(sentence)
+            # Remove everything before the first tabulator.
+            # This is relevant for lines from the "Wortschatz" corpus,
+            # as these lines have the format running_number-TAB-sentence.
+            if "\t" in sentence:
+                sentence = sentence.split("\t")[1]
+
+            # look for ALL occurences of numbers (digits)
+            matches = self.language.match_numbers(sentence)
             if matches:
                 num['matches'] += 1
                 num['numbers'] += len(matches)
 
-            wordMatches = self.language.words.findall(sentence)
-            if wordMatches:
-                num['words'] += len(wordMatches)
+            for number in matches:
+                self._counter(number)
 
-            for match in matches:
-                text = match.replace(self.language.thousandsSeparator, "")
-                number = int(text)
 
-                if number >= self.n_low and number <= self.n_high:
-                    # not yet in dictionary: new entry
-                    if not number in self.counts:
-                        self.counts[number] = 1
-                    else:
-                        # already in dictionary: increase
-                        self.counts[number] += 1
-            # [p] stuff that is to be done by me ------------------------------
-            numwordmatches = wordRegex.findall(sentence)
-            # print('word matches: ',numwordmatches)
-            for numwordmatch in numwordmatches:
-                numword = text2num(numwordmatch) # text2num has to be downloaded and in the same dir as the rest of the code
-                
-                if not numword in self.counts:
-                    self.counts[numword] = 1
-                else:
-                    self.counts[numword] += 1
-                    
+            # look for occurences of number words
+            if self._match_number_words_flag:
+                wordMatches = self.language.match_number_words(sentence)
+
+                if wordMatches:
+                    num['words'] += len(wordMatches)
+
+                for number in wordMatches:
+                    self._counter(number)
+
+
             if self.showProgressBar and (num['lines'] % 100000 == 0):
                 sys.stderr.write('.' if self.verbosity > 0 else
                                  r'{}\r'.format(num['lines']))
@@ -127,7 +162,7 @@ class Processor:
             print(" * in total we found {0} numbers".
                   format(locale.format("%d", num['numbers'], grouping=True)))
             print(" * {0} of these numbers are in the range of interest ({1}-{2})".
-                  format(locale.format("%d", sum(self.counts.values()),
+                  format(locale.format("%d", self._counter.sum(),
                                        grouping=True),
                          self.n_low,self.n_high))
             print(" * there were also {0} occurences of number words (not used yet!)".
@@ -143,12 +178,12 @@ class Processor:
             print("info: matplotlib is available for free from https://matplotlib.org/", file=sys.stderr)
         else:
             numbers = range(self.n_low, self.n_high + 1)
-            values = list(map(lambda x: self.counts[x] if x in self.counts else 0,
-                              numbers))
+            values = list(map(lambda x: self._counter[x], numbers))
             plt.bar(numbers, values)
             plt.show()
 
 
+    # FIXME[question]: seems not to be used? If so, just remove ...
     def getCounts(self):
         '''Provide the counters.
 
@@ -157,4 +192,4 @@ class Processor:
         dict : a dictionary holding as keys the numbers found in during
         processing and the corresponding counter as value.
         '''
-        return self.counts
+        return self._counter._counters # FIXME[hack]

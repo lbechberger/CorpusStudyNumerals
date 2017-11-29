@@ -50,8 +50,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # now do the processing ...
-    processor = Processor(language)
-    processor.setLimits(args.min, args.max)
+    processor = Processor(language, min=args.min, max=args.max)
     processor.verbosity = 2
     if not args.file:
         processor.processFile(sys.stdin)
