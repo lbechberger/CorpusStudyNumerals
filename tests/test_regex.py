@@ -20,6 +20,12 @@ class RegexTest(unittest.TestCase):
         matches = regex.findall(sentence)
         self.assertEqual(matches, ['200'])
 
+    def test_beginning(self):
+        regex = re.compile(r"(?:^|[ ])(\d+)", re.M)
+        sentence = "100 or 200 people"
+        matches = regex.findall(sentence)
+        self.assertEqual(matches, ['100', '200'])
+
     def test_disjunction(self):
         regex = re.compile(r"(one|two|three)")
         sentence = "three apples and two pears"

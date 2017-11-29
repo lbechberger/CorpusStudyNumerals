@@ -2,65 +2,15 @@ from __future__ import print_function
 
 import sys
 import locale
-import re # [p]
+
+from counter import Counter
+
 
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
 
-class Counter:
-    '''The Counter class is a collection of individual counters.  It is
-    intended to count the occurences of numerals (integers), but it
-    may also be used to count other things.
-
-    '''
-    
-    _min_value = 0
-    _max_value = 1
-    _counters = {}
-
-    def __init__(self, min=0, max=100):
-        '''Create a new counter.
-
-        Arguments
-        ---------
-        min : int
-            The minimal value to count. All smaller values will be ignored.
-        max : int
-            The maximal value to count. All larger values will be ignored.
-        '''
-        self._max_value = max
-        self.reset()
-        
-    def __call__(self, number):
-        if number >= self._min_value and number <= self._max_value:
-            # not yet in dictionary: new entry
-            if not number in self._counters:
-                self._counters[number] = 1
-            else:
-                # already in dictionary: increase
-                self._counters[number] += 1
-
-
-    def __getitem__(self, number):
-        return self._counters[number] if number in self._counters else 0
-
-    def sum(self):
-        '''Get the sum of all element counters.
-
-        Result
-        ------
-        The sum of all element counters.
-        '''
-        return sum(self._counters.values())
-    
-    def reset(self):
-        '''Reset this counter object.
-        This will just set all counters to 0
-        but will keep all other parameters.
-        '''
-        self._counters = {}
 
 class Processor:
     '''A Processor can process a single text file from a corpus.  It is
@@ -103,7 +53,7 @@ class Processor:
         Resetting will only affect the counters, but not the
         configuration (range of interest, verbosity, etc.).
         '''
-        self._counter = Counter()
+        self._counter.reset()
 
 
     def processFile(self, inputStream):
@@ -122,23 +72,22 @@ class Processor:
 
             # look for ALL occurences of numbers (digits)
             matches = self.language.match_numbers(sentence)
+            self._counter(matches)
+
             if matches:
                 num['matches'] += 1
                 num['numbers'] += len(matches)
 
-            for number in matches:
-                self._counter(number)
 
 
             # look for occurences of number words
             if self._match_number_words_flag:
                 wordMatches = self.language.match_number_words(sentence)
+                self._counter(wordMatches)
 
                 if wordMatches:
                     num['words'] += len(wordMatches)
-
-                for number in wordMatches:
-                    self._counter(number)
+                 
 
 
             if self.showProgressBar and (num['lines'] % 100000 == 0):
@@ -181,15 +130,3 @@ class Processor:
             values = list(map(lambda x: self._counter[x], numbers))
             plt.bar(numbers, values)
             plt.show()
-
-
-    # FIXME[question]: seems not to be used? If so, just remove ...
-    def getCounts(self):
-        '''Provide the counters.
-
-        Returns
-        -------
-        dict : a dictionary holding as keys the numbers found in during
-        processing and the corresponding counter as value.
-        '''
-        return self._counter._counters # FIXME[hack]

@@ -48,22 +48,26 @@ class Language:
         '''Language constructor. Compile some language specific regular
         expressions.
         '''
-        
-        prefix = '[ \-\$"\[\(^]' # FIXME[problem]: '^' should match start of line, but it doesn't!
+
+        # We need a prefix here to avoid some bad things from happening
+        # FIXME[question]: but what bad things? provide examples, provide tests!
+        prefix = r'(?:^|[ \-\$"\[\(])' # this is ugly!
         number = '(\d+(?:\{0}\d\d\d)*)'.format(self.thousandsSeparator)
         postfix = '[ \.,\!\?:\-€;\]\)"]'
-        self.regex = re.compile(prefix + number + postfix, re.M)
+        self._numbers_regex = re.compile(prefix + number + postfix, re.M)
 
+
+    def precompile_numberwords_old(self,min,max):
         words = r"\b(" + "|".join(self.numberWords.keys()) + r")\b"
-        self.words = re.compile(words)
+        self._number_words_regex = re.compile(words)
 
-
+        
     def precompile_numberwords(self,min,max):
         # [p] precompile regex for numberwords --------------------------------    
         # FIXME[hack]: adapt for different languges!
         numberwords = [num2words(i) for i in range(min,max+1)]
         numwordstr = r"\b(" + "|".join(numberwords) + r")\b"
-        self.wordRegex = re.compile(numwordstr)
+        self._number_words_regex = re.compile(numwordstr)
 
 
     def match_numbers(self, line):
@@ -79,10 +83,7 @@ class Language:
         A list of integers, corresponding to the numbers found in the line.
         '''
 
-        matches = self.regex.findall(line)
-        if not matches:
-            return matches
-
+        matches = self._numbers_regex.findall(line)
         numbers = []
         for match in matches:
             text = match.replace(self.thousandsSeparator, "")
@@ -104,17 +105,10 @@ class Language:
         A list of integers, corresponding to the numbers found in the line.
         '''
 
-        # FIXME[old]:
-        wordMatches = self.words.findall(line)
-        if not wordMatches:
-            return wordMatches
-            
-        # [p] stuff that is to be done by me ------------------------------
-        numwordmatches = self.wordRegex.findall(sentence)
-        # print('word matches: ',numwordmatches)
+        matches = self._number_words_regex.findall(line)
         numbers = []
-        for match in numwordmatches:
-            numbers.append(text2num(numwordmatch))
+        for match in matches:
+            numbers.append(text2num(match))
 
         return numbers
 
