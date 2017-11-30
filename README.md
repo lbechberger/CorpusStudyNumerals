@@ -24,16 +24,18 @@ pip install num2words, digify, matplotlib
 ### Conda
 
 We provide the file `numerals.yml` defining a conda environment which
-should provide all required packages. It can be installed by typing:
+can be used to create an environment containint all required packages.
+Just type:
 ```shell
 conda env create -f numerals.yml
 ```
-Once that environment is installed, you have to activate everytime
-you want to use it. Activation is done with the following command on Linux/Mac OS X:
+Once that environment is created, you have to activate it everytime
+you want to use it.
+Activation is done with the following command on Linux/Mac OS X:
 ```shell
 source activate numerals
 ```
-On Windows
+On Windows simply type:
 ```shell
 activate numerals
 ```
