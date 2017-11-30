@@ -4,23 +4,54 @@ Some scripts for a corpus study on numerals
 
 ## Installation
 
-The package is more or less self contained. There are no hard
-requirements to run the programs. However, to actually use it in a
-reasonable way, you need the following:
+The package uses some libraries that should be in place before you can
+run the program:
 * [num2words](https://pypi.python.org/pypi/num2words)
 * [digify](https://pypi.python.org/pypi/Digify)
 * [matplotlib](https://matplotlib.org/)  (if you want to create plots)
 * some corpus, i.e. a plain text file containing example sentences --
-  you may use data from the Leipzig [Wortschatz](http://wortschatz.uni-leipzig.de)
+  you may use data from the Leipzig
+  [Wortschatz](http://wortschatz.uni-leipzig.de)
   project
 
+### Pip
 
-## The program `count_numbers.py`
+You can use `pip` to install these packages:
+```shell
+pip install num2words, digify, matplotlib
+```
 
-The program `count_numbers.py` (in the subdirectory `numerals/`)is the
+### Conda
+
+We provide the file `numerals.yml` defining a conda environment which
+should provide all required packages. It can be installed by typing:
+```shell
+conda env create -f numerals.yml
+```
+Once that environment is installed, you have to activate everytime
+you want to use it. Activation is done with the following command on Linux/Mac OS X:
+```shell
+source activate numerals
+```
+On Windows
+```shell
+activate numerals
+```
+
+### Compatibility
+
+We try to make the code compatible with (recent vesions of) Python 2
+and Python 3. If you experience any problems, please let as know!
+
+
+
+## Running the program
+
+The program `count_numbers.py` (in the subdirectory `numerals/`) is the
 main program of the package.  It can be used as follows:
 
 ```shell
+cd numerals
 python count_numbers.py --plot path/to/corpus/file.txt
 ```
 
@@ -60,6 +91,9 @@ should behave identical to
 python count_numbers.py --plot /path/to/the/wortschatz/data/eng_news_2015_1M/eng_news_2015_1M-sentences.txt
 ```
 
+
+## Implementation
+
 ### The Processor
 
 The `Processor` (implemented in `processor.py`) does the actual
@@ -90,16 +124,11 @@ project root directory):
 ```shell
 python -m unittest tests.test_languages
 ```
-and
+To run all tests, type
 ```shell
-python -m unittest tests.test_regex
+PYTHONPATH=numerals python -m unittest discover tests
 ```
 
 The file `tests/test_regex.py` does not actually test parts of this
 package but is intended for experimenting with regular expressions.
 
-
-## Compatibility
-
-We try to make the code compatible with (recent vesions of) Python 2
-and Python 3. If you experience any problems, please let as know!

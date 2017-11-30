@@ -4,8 +4,18 @@ import re
 
 #from text2num import text2num
 # text2num has to be downloaded and in the same dir as the rest of the code
-from digify import spelled_num_to_digits as text2num #  # FIXME[hack]: digify seems to be newer than text2num
-from num2words import num2words # [p]
+
+# num2words supports a wide range of languages, a list can be
+# found on the webpage:
+#   https://pypi.python.org/pypi/num2words
+import num2words
+
+# digify is an updated version of "text2num".
+# I currently only supports british and american english
+import digify
+
+
+
 
 class Language:
     '''A base class representing a language. Derived classes may
@@ -57,17 +67,58 @@ class Language:
         self._numbers_regex = re.compile(prefix + number + postfix, re.M)
 
 
-    def precompile_numberwords_old(self,min,max):
-        words = r"\b(" + "|".join(self.numberWords.keys()) + r")\b"
-        self._number_words_regex = re.compile(words)
-
-        
     def precompile_numberwords(self,min,max):
-        # [p] precompile regex for numberwords --------------------------------    
-        # FIXME[hack]: adapt for different languges!
-        numberwords = [num2words(i) for i in range(min,max+1)]
-        numwordstr = r"\b(" + "|".join(numberwords) + r")\b"
-        self._number_words_regex = re.compile(numwordstr)
+        '''Prepare a regular expression that can be used to
+        search for number words.
+
+        Arguments
+        ---------
+        min,max: int
+                The minimal and maximal number to be matched.
+        '''
+        words = self.numberwords_range(min,max)
+        regex = r"\b(" + "|".join(words)+ r")\b"
+        self._number_words_regex = re.compile(words)     
+
+
+    def numberwords_range(self, min, max):
+        '''Generate a list of number words.
+        
+        Arguments
+        ---------
+        min, max: int
+            The minimal and maximal number to include.
+
+        Result
+        ------
+        list of str
+            The list of numberwords.
+        '''
+        return [w for w in self.numberWords
+                if min <= self.numberWords[w] <= max]
+
+
+    def convert_numberword(self, numberword):
+        '''Convert a number word in the corresponding integer number.
+
+        Arguments
+        ---------
+        number : str
+            The spelled number to convert.
+
+        Result
+        ------
+        int
+            The corresponding integer.
+
+        Raises
+        ------
+        NumberException
+            The number word was not understood.
+        '''
+        if numberword in self.numberWords:
+            return self.numberWords.get[numberword]
+        raise NumberException("Unrecognized number word: {}".format(numberword))
 
 
     def match_numbers(self, line):
@@ -75,7 +126,7 @@ class Language:
 
         Arguments
         ---------
-        line: string
+        line: str
             A line of text.
  
         Result
@@ -97,7 +148,7 @@ class Language:
 
         Arguments
         ---------
-        line: string
+        line: str
             A line of text.
 
         Result
@@ -108,17 +159,21 @@ class Language:
         matches = self._number_words_regex.findall(line)
         numbers = []
         for match in matches:
-            numbers.append(text2num(match))
-
+            try:
+                numbers.append(self.convert_numberword(match))
+            except NumberException:
+                pass # we just ignore number words we don't understand ...
         return numbers
 
-    
+
 
 class English(Language):
 
     decimalSeparator = "."
     thousandsSeparator = ","
 
+    # old - not used anymore but kept as a backup (in case we want to
+    # go without num2words/digify)
     numberWords = {
         'zero': 0,
         'one': 1,
@@ -144,6 +199,48 @@ class English(Language):
         'hundred': 100,
         'thousand': 1000
     }
+
+
+    _use_num2words_flag = True
+    
+    def numberwords_range(self, min, max):
+        '''Generate a list of number words.
+        
+        Arguments
+        ---------
+        min, max: int
+            The minimal and maximal number to include.
+
+        Result
+        ------
+        list of str
+            The list of numberwords.
+        '''
+        return [num2words.num2words(i,lang='en') for i in range(min,max+1)] \
+            if self._use_num2words_flag \
+            else super(English, self).numberwords_range(min,max)
+
+
+    def convert_numberword(self, numberword):
+        '''Convert a number word in the corresponding integer number.
+
+        Arguments
+        ---------
+        numberword : str
+            The spelled number to convert.
+
+        Result
+        ------
+        int
+            The corresponding integer.
+
+        Raises
+        ------
+        ValueError
+            The number word was not understood.
+        '''
+        return digify.spelled_num_to_digits(numberword)
+
 
 
 class German(Language):

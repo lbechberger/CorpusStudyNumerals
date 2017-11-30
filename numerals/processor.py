@@ -24,7 +24,7 @@ class Processor:
     n_high = 100
 
     _match_number_words_flag = True
-    showProgressBar = True
+    _show_progress_flag = True
     verbosity = 1
 
     _counter = None
@@ -57,6 +57,16 @@ class Processor:
 
 
     def processFile(self, inputStream):
+        '''Process an input stream. This is the main function of
+        this class. It will read the stream line by line,
+        look for numerals, either provided as numbers, or
+        in words, and count the occurences.
+
+        Arguments
+        ---------
+        inputStream
+            The input stream to read.
+        '''
         num = {'lines': 0, 'matches': 0, 'numbers': 0, 'words': 0}
         
         if self.verbosity > 0:
@@ -79,7 +89,6 @@ class Processor:
                 num['numbers'] += len(matches)
 
 
-
             # look for occurences of number words
             if self._match_number_words_flag:
                 wordMatches = self.language.match_number_words(sentence)
@@ -87,10 +96,10 @@ class Processor:
 
                 if wordMatches:
                     num['words'] += len(wordMatches)
-                 
 
 
-            if self.showProgressBar and (num['lines'] % 100000 == 0):
+            # output progress information (if desired)
+            if self._show_progress_flag and (num['lines'] % 100000 == 0):
                 sys.stderr.write('.' if self.verbosity > 0 else
                                  r'{}\r'.format(num['lines']))
                 sys.stderr.flush()
@@ -100,7 +109,7 @@ class Processor:
             print(" processed {0} lines.".
                   format(locale.format("%d", num['lines'], grouping=True)),
                   file=sys.stderr)
-        elif self.showProgressBar:
+        elif self._show_progress_flag:
             print(file=sys.stderr)
 
         if self.verbosity > 1:
