@@ -36,6 +36,16 @@ class RegexTest(unittest.TestCase):
         matches = regex2.findall(sentence)
         self.assertEqual(matches, ['three', 'two'])
 
+    def test_minimal_match(self):
+        # Matching alternatives actually seems to depend on the order!
+        sentence = "there are twenty two people in this room"
+        regex = re.compile(r"(two|twenty|twenty two)")
+        regex2 = re.compile(r"(twenty two|two|twenty)")
+        matches = regex.findall(sentence)
+        matches2 = regex2.findall(sentence)
+        self.assertEqual(matches, ['twenty', 'two'])
+        self.assertEqual(matches2, ['twenty two'])
 
+        
 if __name__ == '__main__':
     unittest.main()
