@@ -64,7 +64,7 @@ class Language:
         prefix = r'(?:^|[ \-\$"\[\(])' # this is ugly!
         number = '(\d+(?:\{0}\d\d\d)*)'.format(self.thousandsSeparator)
         postfix = '[ \.,\!\?:\-€;\]\)"]'
-        self._numbers_regex = re.compile(prefix + number + postfix, re.M)
+        self._numbers_regex = re.compile(prefix + number + postfix)
 
 
     def precompile_numberwords(self,min,max):
@@ -78,7 +78,7 @@ class Language:
         '''
         words = self.numberwords_range(min,max)
         regex = r"\b(" + "|".join(words)+ r")\b"
-        self._number_words_regex = re.compile(words)     
+        self._number_words_regex = re.compile(regex)     
 
 
     def numberwords_range(self, min, max):
