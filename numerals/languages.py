@@ -58,13 +58,8 @@ class Language:
         '''Language constructor. Compile some language specific regular
         expressions.
         '''
-
-        # We need a prefix here to avoid some bad things from happening
-        # FIXME[question]: but what bad things? provide examples, provide tests!
-        prefix = r'(?:^|[ \-\$"\[\(])' # this is ugly!
-        number = '(\d+(?:\{0}\d\d\d)*)'.format(self.thousandsSeparator)
-        postfix = '[ \.,\!\?:\-€;\]\)"]'
-        self._numbers_regex = re.compile(prefix + number + postfix)
+        
+        self._numbers_regex = re.compile(r'\b(\d+(?:\{0}\d\d\d)*)\b'.format(self.thousandsSeparator))
 
 
     def precompile_numberwords(self,min,max):

@@ -31,7 +31,26 @@ class EnglishTest(unittest.TestCase):
         sentence = "Latest figures (for February this year) show the local command to have 112 officers rostered, instead of the authorised 105."
         matches = self.en.match_numbers(sentence)
         self.assertEqual(matches, [112, 105])
+    
+    def test_parentheses(self):
+        sentence = "Many people (200 to 300) attended the lecture."
+        matches = self.en.match_numbers(sentence)
+        self.assertEqual(matches, [200, 300])
 
+    def test_quotation(self):
+        sentence = 'Merkel said: "300 euros are not enough."'
+        matches = self.en.match_numbers(sentence)
+        self.assertEqual(matches, [300])
+    
+    def test_brackets(self):
+        sentence = "Many people [200] attended the lecture."
+        matches = self.en.match_numbers(sentence)
+        self.assertEqual(matches, [200])
+   
+    def test_dollar_question_mark(self):
+        sentence = "You only want $2?"
+        matches = self.en.match_numbers(sentence)
+        self.assertEqual(matches, [2])
 
 
 class GermanTest(unittest.TestCase):
