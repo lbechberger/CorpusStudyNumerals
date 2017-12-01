@@ -30,8 +30,14 @@ if __name__ == '__main__':
                         help = 'maximal numeral to count')
     parser.add_argument("--language", default = 'en',
                         help = 'the corpus language (en, de, ...)')
+    parser.add_argument("--dates", action="store_true",
+                        help = 'look for dates')
+    parser.add_argument('-s', '--show', action="store_true",
+                        help = 'show matches during processing')
     parser.add_argument('-p', '--plot', action="store_true",
                         help = 'provide a bar plot of the results')
+    parser.add_argument('-v', '--verbose', action='count', default=0,
+                        help = 'operate verbosely (multiple -v options increase the verbosity)')
     parser.add_argument("--version", action='version',
                         version='%(prog)s version ' + __version__,
                         help = 'output version information and exit')
@@ -50,13 +56,15 @@ if __name__ == '__main__':
         sys.exit(1)
 
     # now do the processing ...
-    processor = Processor(language, min=args.min, max=args.max)
-    processor.verbosity = 2
+    processor = Processor(language, min=args.min, max=args.max,
+                          verbosity=args.verbose,
+                          show_matches=args.show,
+                          match_dates=args.dates)
     if not args.file:
-        processor.processFile(sys.stdin)
+        processor.process(sys.stdin)
     for name in args.file:
         if name == '-':
-            processor.processFile(sys.stdin)
+            processor.process(sys.stdin)
             continue
 
         # try to find determine the path to the name ...
@@ -80,9 +88,10 @@ if __name__ == '__main__':
                 sys.exit(1)
 
         # ... and run the processor
-        print("Using \"{}\"".format(name), file=sys.stderr)
+        if args.verbose > 0:
+            print("Using \"{}\"".format(name), file=sys.stderr)
         with open(name, 'r') as inputStream:
-            processor.processFile(inputStream)
+            processor.process(inputStream)
 
     # finally plot the results
     if args.plot:
