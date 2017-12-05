@@ -42,8 +42,8 @@ activate numerals
 
 ### Compatibility
 
-We try to make the code compatible with (recent vesions of) Python 2
-and Python 3. If you experience any problems, please let as know!
+We try to make the code compatible with (recent versions of) Python 2
+and Python 3. If you experience any problems, please let us know!
 
 
 
