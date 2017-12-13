@@ -211,11 +211,11 @@ class English(Language):
         list of str
             The list of numberwords.
         '''
-        return [num2words.num2words(i,lang='en') for i in range(min,max+1)] \
+        return [num2words.num2words(i,lang='en') for i in range(max,min-1, -1)] \
             if self._use_num2words_flag \
             else super(English, self).numberwords_range(min,max)
 
-
+            
     def convert_numberword(self, numberword):
         '''Convert a number word in the corresponding integer number.
 
