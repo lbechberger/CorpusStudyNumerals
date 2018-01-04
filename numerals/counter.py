@@ -27,6 +27,7 @@ class Counter:
             The maximal value to count. All larger values will be ignored.
         '''
         self._max_value = max
+        # [p] why is _min_value not adjusted to the input argument min?
         self.reset()
 
 
