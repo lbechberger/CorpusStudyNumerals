@@ -68,6 +68,7 @@ class Processor:
             The input stream to read.
         '''
         num = {'lines': 0, 'matches': 0, 'numbers': 0, 'words': 0}
+        tripleMatches = [0,0,0,0]
         
         if self.verbosity > 0:
             sys.stderr.write("Starting to process ")
@@ -96,6 +97,10 @@ class Processor:
 
                 if wordMatches:
                     num['words'] += len(wordMatches)
+            
+            # [p] preliminary: returns counts of tuples
+            current_tripleMatches = self.language.match_triple(sentence)
+            tripleMatches = [tripleMatches[i]+current_tripleMatches[i] for i in range(len(tripleMatches))]
 
 
             # output progress information (if desired)
@@ -125,6 +130,7 @@ class Processor:
                          self.n_low,self.n_high))
             print(" * there were also {0} occurences of number words (not used yet!)".
                   format(locale.format("%d", num['words'], grouping=True)))
+            print(' * occurrences of approx-num-combinations in order prec/round, prec/nonr, impr/round, impr/nonr:', tripleMatches) # [p] preliminary, can be done less ugly
 
 
     def plotBars(self):
