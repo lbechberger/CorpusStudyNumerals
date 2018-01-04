@@ -72,7 +72,7 @@ class Language:
                 The minimal and maximal number to be matched.
         '''
         words = self.numberwords_range(min,max)
-        regex = r"\b(" + "|".join(words)+ r")\b"
+        regex = r"(?i)" + r"\b(" + "|".join(words)+ r")\b" # [p] case insensitive matching
         self._number_words_regex = re.compile(regex)     
 
 
@@ -159,6 +159,68 @@ class Language:
             except NumberException:
                 pass # we just ignore number words we don't understand ...
         return numbers
+    
+    def match_triple(self, line):
+        
+        prec_approx = ['exactly', 'precisely', 'to be precise']
+        impr_approx = ['about', 'roughly', 'around', 'or so']
+        approx = prec_approx + impr_approx
+        approxRE = r"(" + "|".join(approx) + r")"
+        
+        numexprRE = "(" + self._numbers_regex.pattern + "|" + self._number_words_regex.pattern + ")"
+        
+        unitRE = r' ([^\s]+)' # [p] nonspecific unitmatch (vorerst) MIND THE SPACE @ THE BEGINNING
+        
+        tripleRE = r"\b(" + approxRE + " " + numexprRE + unitRE + r")\b" # [p] optionally () around the whole expression for one big grouping
+        triple_regex = re.compile(tripleRE) # ^ removed unitRE + r'?' between approx n numexpr
+                                            # ^ " " only used if unitRE is not between approx n numexpr
+        matches = triple_regex.findall(line)
+        
+        prec_round = 0
+        prec_nonr = 0
+        impr_round = 0
+        impr_nonr = 0
+        
+        if len(matches)!= 0:
+            for match in matches:
+                match = list(match)
+                match[2] = match[2].replace(self.thousandsSeparator, "")
+                try:
+                    if not int(match[2])%10: # round numbers
+                        if match[1].casefold() in prec_approx:
+                            prec_round += 1
+                        elif match[1].casefold() in impr_approx:
+                            impr_round += 1
+                        else: print('weird approx match 1.1:',match) # [p] just to know what's going on..
+                    elif int(match[2])%10: # nonround numbers
+                        if match[1].casefold() in prec_approx:
+                            prec_nonr += 1
+                        elif match[1].casefold() in impr_approx:
+                            impr_nonr += 1
+                        else: print('weird approx match 1.2:',match)
+                    else: print('weird numeral match:',match)
+                except ValueError:
+                    try:
+                        if not digify.spelled_num_to_digits(match[2])%10: # round numberwords
+                            if match[1].casefold() in prec_approx:
+                                prec_round += 1
+                            elif match[1].casefold() in impr_approx:
+                                impr_round += 1
+                            else: print('weird approx match 2.1:',match)
+                        elif digify.spelled_num_to_digits(match[2])%10: # nonround numberwords
+                            if match[1].casefold() in prec_approx:
+                                prec_nonr += 1
+                            elif match[1].casefold() in impr_approx:
+                                impr_nonr += 1
+                            else: print('weird approx match 2.2:',match)
+                        else: print('weird number match:',match)
+                    except digify.NumberException:
+                        print('cannot be converted:', match)
+                
+        # try: .. except ValueError: ...
+                    
+        
+        return [prec_round, prec_nonr, impr_round, impr_nonr] # return counts of approximator-numeral combinations
 
 
 
