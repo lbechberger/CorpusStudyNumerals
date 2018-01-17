@@ -260,6 +260,31 @@ class English(Language):
 
     _use_num2words_flag = True
     
+    # make sure that WordNet is available
+    try:
+        from nltk.corpus import wordnet as wn
+        wn.synsets('dog') # try to use wordnet to see if it works
+        #TODO only works if ~/nltk_data/corpora/wordnet/ exists and contains all files --> script!
+    except Exception:
+        wn = None
+    
+    def is_in_category(self, word, category):
+        '''Checks whether 'word' is in 'category' according to the wordNet hierarchy.'''
+        # NLTK wordnet tutorial: http://www.nltk.org/howto/wordnet.html
+        if self.wn != None:
+            word_synsets = self.wn.synsets(word)
+            category_synsets = self.wn.synsets(category)
+            for w in word_synsets:
+                # for each word sense: get its recursive hierarchy of hypernyms
+                closure = w.closure(lambda s: s.hypernyms())
+                for c in category_synsets:
+                    if c in closure:
+                        # if any of the category synsets is in this list: bingo!
+                        return True
+            return False
+        else:
+            return False
+    
     def numberwords_range(self, min, max):
         '''Generate a list of number words.
         
@@ -331,4 +356,4 @@ class German(Language):
         'tausend': 1000
     }
 
-
+    # TODO: use https://github.com/wroberts/pygermanet ?

@@ -8,3 +8,4 @@
    - matplotlib
    - num2words
    - digify
+   - nltk

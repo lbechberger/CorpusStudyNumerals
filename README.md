@@ -13,6 +13,7 @@ run the program:
   you may use data from the Leipzig
   [Wortschatz](http://wortschatz.uni-leipzig.de)
   project
+* [nltk](http://www.nltk.org/)
 
 ### Pip
 
@@ -45,7 +46,11 @@ activate numerals
 We try to make the code compatible with (recent versions of) Python 2
 and Python 3. If you experience any problems, please let us know!
 
+### WordNet
 
+In order to use wordnet, you need to download the appropriate nltk 
+resource files. This can be done by executing the `download_wordnet.sh` 
+shell script.
 
 ## Running the program
 
@@ -131,6 +136,10 @@ To run all tests, type
 PYTHONPATH=numerals python -m unittest discover tests
 ```
 
+For convenience, the latter command has been put in an executable 
+shell script `run_all_tests.sh`.
+
 The file `tests/test_regex.py` does not actually test parts of this
 package but is intended for experimenting with regular expressions.
+
 

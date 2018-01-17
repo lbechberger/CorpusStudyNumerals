@@ -51,6 +51,12 @@ class EnglishTest(unittest.TestCase):
         sentence = "You only want $2?"
         matches = self.en.match_numbers(sentence)
         self.assertEqual(matches, [2])
+    
+    def test_wordnet_dog_car(self):
+        self.assertFalse(self.en.is_in_category('dog', 'car'))
+
+    def test_wordnet_dog_animal(self):
+        self.assertTrue(self.en.is_in_category('dog', 'animal'))
 
 
 class GermanTest(unittest.TestCase):
