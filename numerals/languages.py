@@ -127,8 +127,8 @@ class Language:
             return self.numberWords.get[numberword]
         raise NumberException("Unrecognized number word: {}".format(numberword))
 
-
-        def match_expression(self, line):
+        
+    def match_expression(self, line):
         '''
         (1) Match numbers (written as digits) in a given line.
         (2) Match numbers (written as words) in a given line.
