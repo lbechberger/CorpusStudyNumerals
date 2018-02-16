@@ -54,16 +54,11 @@ class Language:
         return classObject()
 
 
-    def __init__(self):
+    def precompile_regex(self,min,max):
         '''Language constructor. Compile some language specific regular
         expressions.
-        '''
-        
-        self._numbers_regex = re.compile(r'\b(\d+(?:\{0}\d\d\d)*)\b'.format(self.thousandsSeparator))
-
-
-    def precompile_numberwords(self,min,max):
-        '''Prepare a regular expression that can be used to
+        (1) regular expression searching for numbers
+        (2) Prepare a regular expression that can be used to
         search for number words.
 
         Arguments
@@ -71,9 +66,26 @@ class Language:
         min,max: int
                 The minimal and maximal number to be matched.
         '''
-        words = self.numberwords_range(min,max)
-        regex = r"(?i)" + r"\b(" + "|".join(words)+ r")\b" # [p] case insensitive matching
-        self._number_words_regex = re.compile(regex)     
+        
+        _numbers_pattern = r'\b(?P<number>\d+(?:\{0}\d\d\d)*(?:\.\d+)?)\b'.format(self.thousandsSeparator)
+        # [p] changed regex to include word before and after number!
+
+        words = self.numberwords_range(min,max) # uses method below to return list of numberwords
+        _numberwords_pattern = r'(?i)' + r'\b(?P<numword>' + '|'.join(words)+ r')\b'
+        
+        prec_approx = ['exactly', 'precisely', 'to be precise']
+        impr_approx = ['about', 'approximately', 'roughly', 'around', 'or so', 'round about', 'roughly around', 'some']
+        asym_approx = ['more than', 'nearly', 'over', 'almost', 'below', 'above', 'fewer than', 'less than', 'at most', 'at least', 'close to', 'near to', 'up to', 'as high as', 'as low as', 'not quite', ]
+        _prec_approx_pattern = r'(?P<precise>' + '|'.join(prec_approx) + r')'
+        _impr_approx_pattern = r'(?P<imprecise>' + '|'.join(impr_approx) + r')'
+        _asym_approx_pattern = r'(?P<asymmetr>' + '|'.join(asym_approx) + r')'
+        _approx_pattern = r'(?P<approximator>' + _prec_approx_pattern  + '|' + _impr_approx_pattern + _asym_approx_pattern + r')?'
+        
+        _numeral_pattern = '(' + _numbers_pattern + '|' + _numberwords_pattern + ')( ?!(hundred|thousand|million|billion|bn))'
+        
+        _unit_pattern = r' ?(?P<unit>[^\s]+)'
+        
+        self._complex_regex = re.compile(_approx_pattern + ' ' + _numeral_pattern + _unit_pattern + r'\b')    
 
 
     def numberwords_range(self, min, max):
@@ -116,8 +128,10 @@ class Language:
         raise NumberException("Unrecognized number word: {}".format(numberword))
 
 
-    def match_numbers(self, line):
-        '''Match numbers (written as digits) in a given line.
+        def match_expression(self, line):
+        '''
+        (1) Match numbers (written as digits) in a given line.
+        (2) Match numbers (written as words) in a given line.
 
         Arguments
         ---------
@@ -126,101 +140,108 @@ class Language:
  
         Result
         ------
-        A list of integers, corresponding to the numbers found in the line.
+        (1) A list of integers, corresponding to the numbers found in the line.
+        (2) A list of integers, corresponding to the numberwords found in the line. 
+        (3) a list of counts for approximator-numeral combinations
         '''
-
-        matches = self._numbers_regex.findall(line)
+        match_objects = []
         numbers = []
-        for match in matches:
-            text = match.replace(self.thousandsSeparator, "")
-            numbers.append(int(text))
-        
-        return numbers
-
-    
-    def match_number_words(self, line):
-        '''Match numbers (written as words) in a given line.
-
-        Arguments
-        ---------
-        line: str
-            A line of text.
-
-        Result
-        ------
-        A list of integers, corresponding to the numbers found in the line.
-        '''
-
-        matches = self._number_words_regex.findall(line)
-        numbers = []
-        for match in matches:
-            try:
-                numbers.append(self.convert_numberword(match))
-            except NumberException:
-                pass # we just ignore number words we don't understand ...
-        return numbers
-    
-    def match_triple(self, line):
-        
-        prec_approx = ['exactly', 'precisely', 'to be precise']
-        impr_approx = ['about', 'roughly', 'around', 'or so']
-        approx = prec_approx + impr_approx
-        approxRE = r"(" + "|".join(approx) + r")"
-        
-        numexprRE = "(" + self._numbers_regex.pattern + "|" + self._number_words_regex.pattern + ")"
-        
-        unitRE = r' ([^\s]+)' # [p] nonspecific unitmatch (vorerst) MIND THE SPACE @ THE BEGINNING
-        
-        tripleRE = r"\b(" + approxRE + " " + numexprRE + unitRE + r")\b" # [p] optionally () around the whole expression for one big grouping
-        triple_regex = re.compile(tripleRE) # ^ removed unitRE + r'?' between approx n numexpr
-                                            # ^ " " only used if unitRE is not between approx n numexpr
-        matches = triple_regex.findall(line)
-        
+        numberwords = []
         prec_round = 0
         prec_nonr = 0
         impr_round = 0
         impr_nonr = 0
+        null_round = 0
+        null_nonr = 0
         
-        if len(matches)!= 0:
-            for match in matches:
-                match = list(match)
-                match[2] = match[2].replace(self.thousandsSeparator, "")
+        m_o_iterator = self._complex_regex.finditer(line)
+        
+        for m_o in m_o_iterator:
+            match_objects.append(m_o)
+        
+        for m in match_objects:
+            try:
+                with open(r'C:\Users\P-geg\Desktop\Thesis\stats\all_matches.txt', 'a') as matches: # [p] look into environment
+                    matches.write(str(m.group(0))+"\n") # instead of m.groups()
+            except UnicodeEncodeError:
+                print("couldn't be written to file:",m.groups())
+            
+            if m.group('number'):
+                numberstring = m.group('number').replace(self.thousandsSeparator, "")
                 try:
-                    if not int(match[2])%10: # round numbers
-                        if match[1].casefold() in prec_approx:
-                            prec_round += 1
-                        elif match[1].casefold() in impr_approx:
-                            impr_round += 1
-                        else: print('weird approx match 1.1:',match) # [p] just to know what's going on..
-                    elif int(match[2])%10: # nonround numbers
-                        if match[1].casefold() in prec_approx:
-                            prec_nonr += 1
-                        elif match[1].casefold() in impr_approx:
-                            impr_nonr += 1
-                        else: print('weird approx match 1.2:',match)
-                    else: print('weird numeral match:',match)
-                except ValueError:
-                    try:
-                        if not digify.spelled_num_to_digits(match[2])%10: # round numberwords
-                            if match[1].casefold() in prec_approx:
-                                prec_round += 1
-                            elif match[1].casefold() in impr_approx:
-                                impr_round += 1
-                            else: print('weird approx match 2.1:',match)
-                        elif digify.spelled_num_to_digits(match[2])%10: # nonround numberwords
-                            if match[1].casefold() in prec_approx:
-                                prec_nonr += 1
-                            elif match[1].casefold() in impr_approx:
-                                impr_nonr += 1
-                            else: print('weird approx match 2.2:',match)
-                        else: print('weird number match:',match)
-                    except digify.NumberException:
-                        print('cannot be converted:', match)
+                    numbers.append(int(numberstring))
                 
-        # try: .. except ValueError: ...
+                    if (not int(numberstring)%5):
+                        if m.group('precise'):
+                            prec_round += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_prec.txt', 'a') as nrp:
+                                nrp.write(m.group(0).casefold()+"\n")
+                        elif m.group('imprecise'):
+                            impr_round += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_impr.txt', 'a') as nri:
+                                nri.write(m.group(0).casefold()+"\n")
+                        elif m.group('approximator') == None:
+                            null_round += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_null.txt', 'a') as nrn:
+                                nrn.write(m.group(0).casefold()+"\n")
+                        else: print("Something's weird here! Seems no approximator matched @ round numbers:",m.group(0))
+                    elif int(numberstring)%5:
+                        if m.group('precise'):
+                            prec_nonr += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_prec.txt', 'a') as nnp:
+                                nnp.write(m.group(0).casefold()+"\n")
+                        elif m.group('imprecise'):
+                            impr_nonr += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_impr.txt', 'a') as nni:
+                                nni.write(m.group(0).casefold()+"\n")
+                        elif m.group('approximator') == None:
+                            null_nonr += 1
+                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_null.txt', 'a') as nnn:
+                                nnn.write(m.group(0).casefold()+"\n")
+                        else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numbers:",m.group(0))
+                    else: print("A problem with the number has occurred - seems neither round nor nonround:",m.group(0))
+                except ValueError:
+                    print('Number seems to be no int:',m.group(0))
+            elif m.group('numword'):
+                #if type(digify.spelled_num_to_digits(m.group('unit'))) == int: # [p] AUSPROBIEREN OB DAS FUNKTIONIERT!
+                    #pass
+                try:
+                    numberwords.append(self.convert_numberword(m.group('numword')))
+                except NumberException:
+                    print("couldn't convert numberword:",m.group('numword'))
                     
-        
-        return [prec_round, prec_nonr, impr_round, impr_nonr] # return counts of approximator-numeral combinations
+                if not digify.spelled_num_to_digits(m.group('numword'))%5:
+                    if m.group('precise'):
+                        prec_round += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_prec.txt', 'a') as wrp:
+                            wrp.write(m.group(0).casefold()+"\n")
+                    elif m.group('imprecise'):
+                        impr_round += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_impr.txt', 'a') as wri:
+                            wri.write(m.group(0).casefold()+"\n")
+                    elif m.group('approximator') == None:
+                        null_round += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_null.txt', 'a') as wrn:
+                            wrn.write(m.group(0).casefold()+"\n")
+                    else: print("Something's weird here! Couldn't be matched w/ any approximator @ round numwords:",m.group(0))
+                elif digify.spelled_num_to_digits(m.group('numword'))%5:
+                    if m.group('precise'):
+                        prec_nonr += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_prec.txt', 'a') as wnp:
+                            wnp.write(m.group(0).casefold()+"\n")
+                    elif m.group('imprecise'):
+                        impr_nonr += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_impr.txt', 'a') as wni:
+                            wni.write(m.group(0).casefold()+"\n")
+                    elif m.group('approximator') == None:
+                        null_nonr += 1
+                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_null.txt', 'a') as wnn:
+                            wnn.write(m.group(0).casefold()+"\n")
+                    else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numwords:",m.group(0))
+                else: print("A problem with the numberword has occurred - seems neither round nor nonround:",m.group(0))
+            else: print("Expression has not been processed because neither int number nor numberword:",m.group(0)) 
+               
+        return [numbers,numberwords,(prec_round, prec_nonr, impr_round, impr_nonr, null_round, null_nonr)]
 
 
 
