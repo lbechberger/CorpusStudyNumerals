@@ -44,8 +44,9 @@ class Processor:
         self.language = language
         self._counter = Counter(min=min, max=max)
 
-        if self._match_number_words_flag:
-            self.language.precompile_numberwords(min,max)
+        # if self._match_number_words_flag:
+            # self.language.precompile_numberwords(min,max)
+        self.language.precompile_regex(min,max)
 
 
     def reset(self):
@@ -68,7 +69,7 @@ class Processor:
             The input stream to read.
         '''
         num = {'lines': 0, 'matches': 0, 'numbers': 0, 'words': 0}
-        tripleMatches = [0,0,0,0]
+        tripleMatches = [0,0,0,0,0,0]
         
         if self.verbosity > 0:
             sys.stderr.write("Starting to process ")
@@ -82,25 +83,23 @@ class Processor:
                 sentence = sentence.split("\t")[1]
 
             # look for ALL occurences of numbers (digits)
-            matches = self.language.match_numbers(sentence)
-            self._counter(matches)
+            info = self.language.match_expression(sentence)
+            self._counter(info[0]) # occurrences of numbers
 
-            if matches:
+            if info[0]:
                 num['matches'] += 1
-                num['numbers'] += len(matches)
-
-
+                num['numbers'] += len(info[0])
+            
             # look for occurences of number words
-            if self._match_number_words_flag:
-                wordMatches = self.language.match_number_words(sentence)
-                self._counter(wordMatches)
+            # if self._match_number_words_flag:
+            self._counter(info[1]) # ocurrences of numberwords
+            
+            if info[1]:
+                num['words'] += len(info[1])
 
-                if wordMatches:
-                    num['words'] += len(wordMatches)
             
             # [p] preliminary: returns counts of tuples
-            current_tripleMatches = self.language.match_triple(sentence)
-            tripleMatches = [tripleMatches[i]+current_tripleMatches[i] for i in range(len(tripleMatches))]
+            tripleMatches = [tripleMatches[i]+info[2][i] for i in range(len(tripleMatches))]
 
 
             # output progress information (if desired)
@@ -130,7 +129,7 @@ class Processor:
                          self.n_low,self.n_high))
             print(" * there were also {0} occurences of number words (not used yet!)".
                   format(locale.format("%d", num['words'], grouping=True)))
-            print(' * occurrences of approx-num-combinations in order prec/round, prec/nonr, impr/round, impr/nonr:', tripleMatches) # [p] preliminary, can be done less ugly
+            print(' * occurrences of approx-num-combinations in order prec+round, prec+nonr, impr+round, impr+nonr, null+round, null+nonr:', tripleMatches) # [p] preliminary, can be done less ugly
 
 
     def plotBars(self):
