@@ -75,7 +75,7 @@ class Language:
         
         prec_approx = ['exactly', 'precisely', 'to be precise']
         impr_approx = ['about', 'approximately', 'roughly', 'around', 'or so', 'round about', 'roughly around', 'some']
-        asym_approx = ['more than', 'nearly', 'over', 'almost', 'below', 'above', 'fewer than', 'less than', 'at most', 'at least', 'close to', 'near to', 'up to', 'as high as', 'as low as', 'not quite', ]
+        asym_approx = ['more than', 'nearly', 'over', 'almost', 'approaching', 'below', 'above', 'fewer than', 'less than', 'at most', 'at least', 'close to', 'near to', 'up to', 'as high as', 'as low as', 'not quite', ]
         _prec_approx_pattern = r'(?P<precise>' + '|'.join(prec_approx) + r')'
         _impr_approx_pattern = r'(?P<imprecise>' + '|'.join(impr_approx) + r')'
         _asym_approx_pattern = r'(?P<asymmetr>' + '|'.join(asym_approx) + r')'
@@ -187,7 +187,7 @@ class Language:
                             null_round += 1
                             with open(os.environ['HOMEPATH']+r'\stats\num_round_null.txt', 'a') as nrn:
                                 nrn.write(m.group(0).casefold()+"\n")
-                        else: print("Something's weird here! Seems no approximator matched @ round numbers:",m.group(0))
+                        else: print("Asymmetrical approximator (not counted):",m.group(0))
                     elif int(numberstring)%5:
                         if m.group('precise'):
                             prec_nonr += 1
@@ -201,7 +201,7 @@ class Language:
                             null_nonr += 1
                             with open(os.environ['HOMEPATH']+r'\stats\num_nonr_null.txt', 'a') as nnn:
                                 nnn.write(m.group(0).casefold()+"\n")
-                        else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numbers:",m.group(0))
+                        else: print("Asymmetrical approximator (not counted):",m.group(0))
                     else: print("A problem with the number has occurred - seems neither round nor nonround:",m.group(0))
                 except ValueError:
                     print('Number seems to be no int:',m.group(0))
@@ -226,7 +226,7 @@ class Language:
                         null_round += 1
                         with open(os.environ['HOMEPATH']+r'\stats\word_round_null.txt', 'a') as wrn:
                             wrn.write(m.group(0).casefold()+"\n")
-                    else: print("Something's weird here! Couldn't be matched w/ any approximator @ round numwords:",m.group(0))
+                    else: print("Asymmetrical approximator (not counted):",m.group(0))
                 elif digify.spelled_num_to_digits(m.group('numword'))%5:
                     if m.group('precise'):
                         prec_nonr += 1
@@ -240,7 +240,7 @@ class Language:
                         null_nonr += 1
                         with open(os.environ['HOMEPATH']+r'\stats\word_nonr_null.txt', 'a') as wnn:
                             wnn.write(m.group(0).casefold()+"\n")
-                    else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numwords:",m.group(0))
+                    else: print("Asymmetrical approximator (not counted):",m.group(0))
                 else: print("A problem with the numberword has occurred - seems neither round nor nonround:",m.group(0))
             else: print("Expression has not been processed because neither int number nor numberword:",m.group(0)) 
                
