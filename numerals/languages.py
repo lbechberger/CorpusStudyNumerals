@@ -79,7 +79,7 @@ class Language:
         _prec_approx_pattern = r'(?P<precise>' + '|'.join(prec_approx) + r')'
         _impr_approx_pattern = r'(?P<imprecise>' + '|'.join(impr_approx) + r')'
         _asym_approx_pattern = r'(?P<asymmetr>' + '|'.join(asym_approx) + r')'
-        _approx_pattern = r'(?P<approximator>' + _prec_approx_pattern  + '|' + _impr_approx_pattern + _asym_approx_pattern + r')?'
+        _approx_pattern = r'(?P<approximator>' + _prec_approx_pattern  + '|' + _impr_approx_pattern + '|' + _asym_approx_pattern + r')?'
         
         _numeral_pattern = '(' + _numbers_pattern + '|' + _numberwords_pattern + ')(?! (hundred|thousand|million|billion|bn))'
         
