@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 import re
 
 #from text2num import text2num
@@ -144,6 +144,9 @@ class Language:
         (2) A list of integers, corresponding to the numberwords found in the line. 
         (3) a list of counts for approximator-numeral combinations
         '''
+        if not os.path.exists(os.environ['HOMEPATH']+r'\stats'):
+            os.mkdir(os.environ['HOMEPATH']+r'\stats')
+            
         match_objects = []
         numbers = []
         numberwords = []
@@ -161,7 +164,7 @@ class Language:
         
         for m in match_objects:
             try:
-                with open(r'C:\Users\P-geg\Desktop\Thesis\stats\all_matches.txt', 'a') as matches: # [p] look into environment
+                with open(os.environ['HOMEPATH']+r'\stats\all_matches.txt', 'a') as matches: # [p] look into environment
                     matches.write(str(m.group(0))+"\n") # instead of m.groups()
             except UnicodeEncodeError:
                 print("couldn't be written to file:",m.groups())
@@ -174,29 +177,29 @@ class Language:
                     if (not int(numberstring)%5):
                         if m.group('precise'):
                             prec_round += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_prec.txt', 'a') as nrp:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_round_prec.txt', 'a') as nrp:
                                 nrp.write(m.group(0).casefold()+"\n")
                         elif m.group('imprecise'):
                             impr_round += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_impr.txt', 'a') as nri:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_round_impr.txt', 'a') as nri:
                                 nri.write(m.group(0).casefold()+"\n")
                         elif m.group('approximator') == None:
                             null_round += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_round_null.txt', 'a') as nrn:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_round_null.txt', 'a') as nrn:
                                 nrn.write(m.group(0).casefold()+"\n")
                         else: print("Something's weird here! Seems no approximator matched @ round numbers:",m.group(0))
                     elif int(numberstring)%5:
                         if m.group('precise'):
                             prec_nonr += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_prec.txt', 'a') as nnp:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_prec.txt', 'a') as nnp:
                                 nnp.write(m.group(0).casefold()+"\n")
                         elif m.group('imprecise'):
                             impr_nonr += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_impr.txt', 'a') as nni:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_impr.txt', 'a') as nni:
                                 nni.write(m.group(0).casefold()+"\n")
                         elif m.group('approximator') == None:
                             null_nonr += 1
-                            with open(r'C:\Users\P-geg\Desktop\Thesis\stats\num_nonr_null.txt', 'a') as nnn:
+                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_null.txt', 'a') as nnn:
                                 nnn.write(m.group(0).casefold()+"\n")
                         else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numbers:",m.group(0))
                     else: print("A problem with the number has occurred - seems neither round nor nonround:",m.group(0))
@@ -213,29 +216,29 @@ class Language:
                 if not digify.spelled_num_to_digits(m.group('numword'))%5:
                     if m.group('precise'):
                         prec_round += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_prec.txt', 'a') as wrp:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_round_prec.txt', 'a') as wrp:
                             wrp.write(m.group(0).casefold()+"\n")
                     elif m.group('imprecise'):
                         impr_round += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_impr.txt', 'a') as wri:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_round_impr.txt', 'a') as wri:
                             wri.write(m.group(0).casefold()+"\n")
                     elif m.group('approximator') == None:
                         null_round += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_round_null.txt', 'a') as wrn:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_round_null.txt', 'a') as wrn:
                             wrn.write(m.group(0).casefold()+"\n")
                     else: print("Something's weird here! Couldn't be matched w/ any approximator @ round numwords:",m.group(0))
                 elif digify.spelled_num_to_digits(m.group('numword'))%5:
                     if m.group('precise'):
                         prec_nonr += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_prec.txt', 'a') as wnp:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_prec.txt', 'a') as wnp:
                             wnp.write(m.group(0).casefold()+"\n")
                     elif m.group('imprecise'):
                         impr_nonr += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_impr.txt', 'a') as wni:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_impr.txt', 'a') as wni:
                             wni.write(m.group(0).casefold()+"\n")
                     elif m.group('approximator') == None:
                         null_nonr += 1
-                        with open(r'C:\Users\P-geg\Desktop\Thesis\stats\word_nonr_null.txt', 'a') as wnn:
+                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_null.txt', 'a') as wnn:
                             wnn.write(m.group(0).casefold()+"\n")
                     else: print("Something's weird here! Couldn't be matched w/ any approximator @ nonround numwords:",m.group(0))
                 else: print("A problem with the numberword has occurred - seems neither round nor nonround:",m.group(0))
