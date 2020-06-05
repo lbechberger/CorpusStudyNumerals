@@ -81,9 +81,9 @@ if __name__ == '__main__':
 
         # ... and run the processor
         print("Using \"{}\"".format(name), file=sys.stderr)
-        with open(name, 'r') as inputStream:
-            processor.processFile(inputStream)
+        with open(name, 'r', encoding="utf8") as inputStream:
+            nums, numwords = processor.processFile(inputStream) # [p] modified to return counts
 
     # finally plot the results
     if args.plot:
-        processor.plotBars()
+        processor.plotBars(nums, numwords) # [p] modified to use counts for plotting
