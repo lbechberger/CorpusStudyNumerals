@@ -75,59 +75,19 @@ class Language:
         
         prec_approx = ['exactly', 'precisely', 'to be precise']
         impr_approx = ['about', 'approximately', 'roughly', 'around', 'or so', 'round about', 'roughly around', 'some']
-        asym_approx = ['more than', 'nearly', 'over', 'almost', 'approaching', 'below', 'above', 'fewer than', 'less than', 'at most', 'at least', 'close to', 'near to', 'up to', 'as high as', 'as low as', 'not quite', ]
+        asym_approx = ['more than', 'nearly', 'over', 'almost', 'approaching', 'below', 'above', 'fewer than', 'less than', 'at most', 'at least', 'close to', 'near to', 'up to', 'as high as', 'as low as', 'not quite']
         _prec_approx_pattern = r'(?P<precise>' + '|'.join(prec_approx) + r')'
         _impr_approx_pattern = r'(?P<imprecise>' + '|'.join(impr_approx) + r')'
         _asym_approx_pattern = r'(?P<asymmetr>' + '|'.join(asym_approx) + r')'
-        _approx_pattern = r'(?P<approximator>' + _prec_approx_pattern  + '|' + _impr_approx_pattern + '|' + _asym_approx_pattern + r')?'
+        _approx_pattern = r'(?P<approximator>(' + _prec_approx_pattern  + '|' + _impr_approx_pattern + '|' + _asym_approx_pattern + r') )?' # letzte aenderung: added space here since otherwise null-numeral without space at the beginning (beginning of sentence) can't be matched
         
-        _numeral_pattern = '(' + _numbers_pattern + '|' + _numberwords_pattern + ')(?! (hundred|thousand|million|billion|bn))'
+        _numeral_pattern = '(' + _numbers_pattern + '|' + _numberwords_pattern + r')(?! (hundred|thousand|million|billion|bn|bln)|\.\d+|\,\d+|\:\d+)' # letzte aenderung: hinzugefügter doppelpunkt
         
-        _unit_pattern = r' ?(?P<unit>[^\s]+)'
+        _unit_pattern = r'[ -]?(?P<unit>[^\s]+)' # letzte hinzugefuegte aenderung: bindestrich
         
-        self._complex_regex = re.compile(_approx_pattern + ' ' + _numeral_pattern + _unit_pattern + r'\b')    
-
-
-    def numberwords_range(self, min, max):
-        '''Generate a list of number words.
+        self._complex_regex = re.compile(_approx_pattern + _numeral_pattern + _unit_pattern + r'\b') 
         
-        Arguments
-        ---------
-        min, max: int
-            The minimal and maximal number to include.
 
-        Result
-        ------
-        list of str
-            The list of numberwords.
-        '''
-        return [w for w in self.numberWords
-                if min <= self.numberWords[w] <= max]
-
-
-    def convert_numberword(self, numberword):
-        '''Convert a number word in the corresponding integer number.
-
-        Arguments
-        ---------
-        number : str
-            The spelled number to convert.
-
-        Result
-        ------
-        int
-            The corresponding integer.
-
-        Raises
-        ------
-        NumberException
-            The number word was not understood.
-        '''
-        if numberword in self.numberWords:
-            return self.numberWords.get[numberword]
-        raise NumberException("Unrecognized number word: {}".format(numberword))
-
-        
     def match_expression(self, line):
         '''
         (1) Match numbers (written as digits) in a given line.
@@ -142,20 +102,30 @@ class Language:
         ------
         (1) A list of integers, corresponding to the numbers found in the line.
         (2) A list of integers, corresponding to the numberwords found in the line. 
-        (3) a list of counts for approximator-numeral combinations
         '''
-        if not os.path.exists(os.environ['HOMEPATH']+r'\stats'):
-            os.mkdir(os.environ['HOMEPATH']+r'\stats')
+        
+        if not os.path.exists(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats'):
+            os.mkdir(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats')
             
         match_objects = []
         numbers = []
         numberwords = []
-        prec_round = 0
-        prec_nonr = 0
-        impr_round = 0
-        impr_nonr = 0
-        null_round = 0
-        null_nonr = 0
+        prec_round_dis = 0
+        prec_round_cont = 0
+        prec_nonr_dis = 0
+        prec_nonr_cont = 0
+        impr_round_dis = 0
+        impr_round_cont = 0
+        impr_nonr_dis = 0
+        impr_nonr_cont = 0
+        null_round_dis = 0
+        null_round_cont = 0
+        null_nonr_dis = 0
+        null_nonr_cont = 0
+        asym = 0
+        unit_count = {}
+        
+        unit_categories = {'time_period':0,'time_unit':0,'linear_unit':0,'magnitude_relation':0,'monetary_unit':0,'organism':1,'human_activity':1,'group':1,'location':1,'transport':1,'material':1,'unit_of_measurement':0}
         
         m_o_iterator = self._complex_regex.finditer(line)
         
@@ -164,90 +134,178 @@ class Language:
         
         for m in match_objects:
             try:
-                with open(os.environ['HOMEPATH']+r'\stats\all_matches.txt', 'a') as matches: # [p] look into environment
-                    matches.write(str(m.group(0))+"\n") # instead of m.groups()
+                pass
+                # with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\all_matches.txt', 'a') as matches: # [p] look into environment
+                    # matches.write(str(m.group(0))+"\n") # instead of m.groups()
+                # if not m.group('unit') in unit_count:
+                    # unit_count[m.group('unit')] = 1
+                # else: unit_count[m.group('unit')] += 1
             except UnicodeEncodeError:
-                print("couldn't be written to file:",m.groups())
-            
-            if m.group('number'):
-                numberstring = m.group('number').replace(self.thousandsSeparator, "")
-                try:
-                    numbers.append(int(numberstring))
+                print("couldn't be written to file:",m.groups()) # pass  
                 
-                    if (not int(numberstring)%5):
-                        if m.group('precise'):
-                            prec_round += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_round_prec.txt', 'a') as nrp:
-                                nrp.write(m.group(0).casefold()+"\n")
-                        elif m.group('imprecise'):
-                            impr_round += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_round_impr.txt', 'a') as nri:
-                                nri.write(m.group(0).casefold()+"\n")
-                        elif m.group('approximator') == None:
-                            null_round += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_round_null.txt', 'a') as nrn:
-                                nrn.write(m.group(0).casefold()+"\n")
-                        else: print("Asymmetrical approximator (not counted):",m.group(0))
-                    elif int(numberstring)%5:
-                        if m.group('precise'):
-                            prec_nonr += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_prec.txt', 'a') as nnp:
-                                nnp.write(m.group(0).casefold()+"\n")
-                        elif m.group('imprecise'):
-                            impr_nonr += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_impr.txt', 'a') as nni:
-                                nni.write(m.group(0).casefold()+"\n")
-                        elif m.group('approximator') == None:
-                            null_nonr += 1
-                            with open(os.environ['HOMEPATH']+r'\stats\num_nonr_null.txt', 'a') as nnn:
-                                nnn.write(m.group(0).casefold()+"\n")
-                        else: print("Asymmetrical approximator (not counted):",m.group(0))
-                    else: print("A problem with the number has occurred - seems neither round nor nonround:",m.group(0))
-                except ValueError:
-                    print('Number seems to be no int:',m.group(0))
-            elif m.group('numword'):
-                #if type(digify.spelled_num_to_digits(m.group('unit'))) == int: # [p] AUSPROBIEREN OB DAS FUNKTIONIERT!
-                    #pass
-                try:
-                    numberwords.append(self.convert_numberword(m.group('numword')))
-                except NumberException:
-                    print("couldn't convert numberword:",m.group('numword'))
+            try:
+                with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\all_matches.txt', 'a') as matches: # [p] look into environment
+                    matches.write(str(m.group(0))+"\n") # instead of m.groups()
                     
-                if not digify.spelled_num_to_digits(m.group('numword'))%5:
-                    if m.group('precise'):
-                        prec_round += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_round_prec.txt', 'a') as wrp:
-                            wrp.write(m.group(0).casefold()+"\n")
-                    elif m.group('imprecise'):
-                        impr_round += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_round_impr.txt', 'a') as wri:
-                            wri.write(m.group(0).casefold()+"\n")
-                    elif m.group('approximator') == None:
-                        null_round += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_round_null.txt', 'a') as wrn:
-                            wrn.write(m.group(0).casefold()+"\n")
-                    else: print("Asymmetrical approximator (not counted):",m.group(0))
-                elif digify.spelled_num_to_digits(m.group('numword'))%5:
-                    if m.group('precise'):
-                        prec_nonr += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_prec.txt', 'a') as wnp:
-                            wnp.write(m.group(0).casefold()+"\n")
-                    elif m.group('imprecise'):
-                        impr_nonr += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_impr.txt', 'a') as wni:
-                            wni.write(m.group(0).casefold()+"\n")
-                    elif m.group('approximator') == None:
-                        null_nonr += 1
-                        with open(os.environ['HOMEPATH']+r'\stats\word_nonr_null.txt', 'a') as wnn:
-                            wnn.write(m.group(0).casefold()+"\n")
-                    else: print("Asymmetrical approximator (not counted):",m.group(0))
-                else: print("A problem with the numberword has occurred - seems neither round nor nonround:",m.group(0))
-            else: print("Expression has not been processed because neither int number nor numberword:",m.group(0)) 
-               
-        return [numbers,numberwords,(prec_round, prec_nonr, impr_round, impr_nonr, null_round, null_nonr)]
-
-
-
+                # if not m.group('unit') in unit_count:
+                    # unit_count[m.group('unit')] = 1
+                # else: unit_count[m.group('unit')] += 1
+                
+                for category in unit_categories:
+                    if self.is_in_category(m.group('unit'), category):
+                                   
+                        if m.group('number'):
+                            numberstring = m.group('number').replace(self.thousandsSeparator, "")
+                            try:
+                                numbers.append(int(numberstring))    
+                                if (not int(numberstring)%5):
+                                    if m.group('precise'):
+                                        if unit_categories[category]:
+                                            prec_round_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_roundnum_dis.txt', 'a') as nrpd:
+                                                nrpd.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            prec_round_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_roundnum_cont.txt', 'a') as nrpc:
+                                                nrpc.write(m.group(0).casefold()+"\n")
+                                    elif m.group('imprecise'):
+                                        if unit_categories[category]:
+                                            print("CATEGORY:",category)
+                                            impr_round_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_roundnum_dis.txt', 'a') as nrid:
+                                                nrid.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            impr_round_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_roundnum_cont.txt', 'a') as nric:
+                                                nric.write(m.group(0).casefold()+"\n")
+                                    elif m.group('approximator') == None:
+                                        if unit_categories[category]:
+                                            null_round_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_roundnum_dis.txt', 'a') as nrnd:
+                                                nrnd.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            null_round_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_roundnum_cont.txt', 'a') as nrnc:
+                                                nrnc.write(m.group(0).casefold()+"\n")
+                                    else: 
+                                        asym +=1
+                                        # print("Asymmetrical approximator count:",m.group(0))
+                                elif int(numberstring)%5:
+                                    if m.group('precise'):
+                                        if unit_categories[category]:
+                                            prec_nonr_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_nonrnum_dis.txt', 'a') as nnpd:
+                                                nnpd.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            prec_nonr_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_nonrnum_cont.txt', 'a') as nnpc:
+                                                nnpc.write(m.group(0).casefold()+"\n")
+                                    elif m.group('imprecise'):
+                                        if unit_categories[category]:
+                                            impr_nonr_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_nonrnum_dis.txt', 'a') as nnid:
+                                                nnid.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            impr_nonr_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_nonrnum_cont.txt', 'a') as nnic:
+                                                nnic.write(m.group(0).casefold()+"\n")
+                                    elif m.group('approximator') == None:
+                                        if unit_categories[category]:                                        
+                                            null_nonr_dis += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_nonrnum_dis.txt', 'a') as nnnd:
+                                                nnnd.write(m.group(0).casefold()+"\n")
+                                        else:
+                                            null_nonr_cont += 1
+                                            with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_nonrnum_cont.txt', 'a') as nnnc:
+                                                nnnc.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        asym +=1
+                                        # print("Asymmetrical approximator count:",m.group(0))
+                                else: print("A problem with the number has occurred - seems neither round nor nonround:",m.group(0))
+                            except ValueError:
+                                # pass
+                                with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\no_int.txt', 'a') as no_int:
+                                    no_int.write(m.group(0).casefold()+"\n")
+                                # print('Number seems to be no int:',m.group(0))
+                        elif m.group('numword'):
+                            try:
+                                numberwords.append(self.convert_numberword(m.group('numword')))
+                            except NumberException:
+                                print("couldn't convert numberword:",m.group('numword'))
+                                
+                            if not digify.spelled_num_to_digits(m.group('numword'))%5:
+                                if m.group('precise'):
+                                    if unit_categories[category]:
+                                        prec_round_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_roundword_dis.txt', 'a') as wrpd:
+                                            wrpd.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        prec_round_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_roundword_cont.txt', 'a') as wrpc:
+                                            wrpc.write(m.group(0).casefold()+"\n")
+                                elif m.group('imprecise'):
+                                    if unit_categories[category]:
+                                        impr_round_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_roundword_dis.txt', 'a') as wrid:
+                                            wrid.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        impr_round_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_roundword_cont.txt', 'a') as wric:
+                                            wric.write(m.group(0).casefold()+"\n")
+                                elif m.group('approximator') == None:
+                                    if unit_categories[category]:
+                                        null_round_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_roundword_dis.txt', 'a') as wrnd:
+                                            wrnd.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        null_round_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_roundword_cont.txt', 'a') as wrnc:
+                                            wrnc.write(m.group(0).casefold()+"\n")
+                                else: 
+                                    asym +=1
+                                    # print("Asymmetrical approximator count:",m.group(0))
+                            elif digify.spelled_num_to_digits(m.group('numword'))%5:
+                                if m.group('precise'):
+                                    if unit_categories[category]:
+                                        prec_nonr_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_nonrword_dis.txt', 'a') as wnpd:
+                                            wnpd.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        prec_nonr_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\prec_nonrword_cont.txt', 'a') as wnpc:
+                                            wnpc.write(m.group(0).casefold()+"\n")
+                                elif m.group('imprecise'):
+                                    if unit_categories[category]:
+                                        impr_nonr_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_nonrword_dis.txt', 'a') as wnid:
+                                            wnid.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        impr_nonr_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\impr_nonrword_cont.txt', 'a') as wnic:
+                                            wnic.write(m.group(0).casefold()+"\n")
+                                elif m.group('approximator') == None:
+                                    if unit_categories[category]:
+                                        null_nonr_dis += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_nonrword_dis.txt', 'a') as wnnd:
+                                            wnnd.write(m.group(0).casefold()+"\n")
+                                    else:
+                                        null_nonr_cont += 1
+                                        with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\null_nonrword_cont.txt', 'a') as wnnc:
+                                            wnnc.write(m.group(0).casefold()+"\n")
+                                else: 
+                                    asym +=1
+                                    # print("Asymmetrical approximator count:",m.group(0))
+                            else: print("A problem with the numberword has occurred - seems neither round nor nonround:",m.group(0))
+                        else: print("Expression has not been processed because neither int number nor numberword:",m.group(0))
+                        break
+                if all(not(self.is_in_category(m.group('unit'),category)) for category in unit_categories): # if the unit is not part of any category
+                    with open(os.environ['HOMEPATH']+r'\Desktop\Thesis\stats\excluded.txt', 'a') as exc: # exclude but record these excluded cases in a file
+                        exc.write(m.group(0)+"\n")
+            except UnicodeEncodeError: 
+                print("COULDN'T WRITE EXPRESSION TO FILE:",m.group(0))
+                
+        return [numbers,numberwords,(prec_round_dis,prec_round_cont,prec_nonr_dis,prec_nonr_cont,impr_round_dis,impr_round_cont,impr_nonr_dis,impr_nonr_cont,null_round_dis,null_round_cont,null_nonr_dis,null_nonr_cont),asym,unit_count]
+        
 class English(Language):
 
     decimalSeparator = "."
@@ -325,8 +383,8 @@ class English(Language):
         return [num2words.num2words(i,lang='en') for i in range(max,min-1, -1)] \
             if self._use_num2words_flag \
             else super(English, self).numberwords_range(min,max)
+# range(max,min-1, -1) because big numbers to be matched first
 
-            
     def convert_numberword(self, numberword):
         '''Convert a number word in the corresponding integer number.
 
